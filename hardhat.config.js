@@ -1,8 +1,6 @@
 require("dotenv").config();
 require("@nomicfoundation/hardhat-toolbox");
 
-const { NEOX_PK } = process.env;
-
 module.exports = {
     solidity: {
       version: "0.8.26",
