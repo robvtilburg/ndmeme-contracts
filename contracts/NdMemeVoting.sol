@@ -12,6 +12,7 @@ contract NdMemeVoting {
         bytes32[] options;
         IERC20 token; // Token used for weight calculation
     }
+
     mapping(uint256 => Topic) public topics;
     uint256 public topicCount;
 
@@ -49,7 +50,7 @@ contract NdMemeVoting {
         topicCount++;
     }
 
-    function vote(uint256 topicId, string memory option) external onlyBeforeEnd(topicId) {
+   function vote(uint256 topicId, string memory option) external onlyBeforeEnd(topicId) {
         Topic storage topic = topics[topicId];
         require(!topic.hasVoted[msg.sender], "You have already voted");
         bytes32 optionHash = keccak256(abi.encodePacked(option));
@@ -64,7 +65,7 @@ contract NdMemeVoting {
         topic.hasVoted[msg.sender] = true;
         emit Voted(topicId, msg.sender, option, 0); // Placeholder weight
     }
-
+    
     function finalizeVotes(uint256 topicId) external onlyAfterEnd(topicId) {
         Topic storage topic = topics[topicId];
         for (uint256 i = 0; i < topic.options.length; i++) {
@@ -77,5 +78,26 @@ contract NdMemeVoting {
         Topic storage topic = topics[topicId];
         bytes32 optionHash = keccak256(abi.encodePacked(option));
         return topic.votes[optionHash];
+    }
+
+    // New function to retrieve topic details and options
+    function getTopicDetails(uint256 topicId) 
+        external 
+        view 
+        returns (
+            string memory description, 
+            uint256 endTime, 
+            string[] memory optionDescriptions
+        ) 
+    {
+        Topic storage topic = topics[topicId];
+        description = topic.description;
+        endTime = topic.endTime;
+
+        // Convert bytes32[] options to string[] for easier reading
+        optionDescriptions = new string[](topic.options.length);
+        for (uint256 i = 0; i < topic.options.length; i++) {
+            optionDescriptions[i] = string(abi.decode(abi.encodePacked(topic.options[i]), (string)));
+        }
     }
 }
