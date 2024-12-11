@@ -8,7 +8,7 @@ const contractABI = [
 ];
 
 // Update with your deployed contract address
-const contractAddress = "0x1896e024F4df09bC6B260558aDB70b6487803219";
+const contractAddress = "0x675649b32511a3Cc0e664f27f98740a8fb5f6fE0";
 
 console.log(process.env.INFURA_API_URL)
 
@@ -26,9 +26,9 @@ async function createVotingTopic() {
   const feeData = await contract.provider.getFeeData();
 
     // Define topic parameters
-    const description = "What is the best memecoin ever?";
+    const description = "Where should we add liquidity?";
     const endTime = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60; // 7 days from now
-    const options = ["NDMEME!", "NDMEME", "$NDMEME"];
+    const options = ["FTW", "Carrot swap", "Asteroneo"];
     const tokenAddress = "0x1ce16390fd09040486221e912b87551e4e44ab17"; // using wrapped gas for testing purposes.
 
     const estimatedGas = await contract.estimateGas.createTopic(description, endTime, options, tokenAddress);

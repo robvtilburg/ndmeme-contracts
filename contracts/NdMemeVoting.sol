@@ -9,7 +9,7 @@ contract NdMemeVoting {
     struct Topic {
         string description;
         uint256 endTime;
-        mapping(address => bool) hasVoted;
+        mapping(bytes32 => address[]) voters; // optionHash => voters
         mapping(bytes32 => uint256) votes; // optionHash => voteWeight
         bytes32[] optionHashes;
         string[] optionStrings; // Store original string options
@@ -21,9 +21,11 @@ contract NdMemeVoting {
     uint256 public topicCount;
 
     address public owner; // Contract owner address
+    mapping(address => mapping(uint256 => bool)) public votedTopics; // user address => topicId => voted
+
 
     event TopicCreated(uint256 topicId, string description, uint256 endTime);
-    event Voted(uint256 topicId, address voter, string option, uint256 weight);
+    event Voted(uint256 topicId, address voter, string option);
     event VotesFinalized(uint256 topicId);
 
     modifier onlyOwner() {
@@ -43,12 +45,6 @@ contract NdMemeVoting {
 
     modifier topicExists(uint256 topicId) {
         require(topicId < topicCount, "Topic does not exist");
-        _;
-    }
-
-    modifier onlyOncePerVote(uint256 topicId) {
-        Topic storage topic = topics[topicId];
-        require(!topic.hasVoted[msg.sender], "You have already voted");
         _;
     }
 
@@ -86,7 +82,6 @@ contract NdMemeVoting {
         external
         topicExists(topicId)
         onlyBeforeEnd(topicId)
-        onlyOncePerVote(topicId)
     {
         Topic storage topic = topics[topicId];
         bytes32 optionHash = keccak256(abi.encodePacked(option));
@@ -100,13 +95,14 @@ contract NdMemeVoting {
             }
         }
 
-        require(validOption, "Invalid voting option");
+        // Check if the user has already voted on this topic
+        require(!votedTopics[msg.sender][topicId], "You have already voted on this topic");
 
-        // Record the vote and prevent further voting
-        topic.hasVoted[msg.sender] = true;
+        // Record the vote and the voter
+        topic.voters[optionHash].push(msg.sender);
+        votedTopics[msg.sender][topicId] = true;
 
-        // Log the vote with a placeholder weight (can be updated after finalization)
-        emit Voted(topicId, msg.sender, option, 0); // Placeholder weight for now
+        emit Voted(topicId, msg.sender, option);
     }
 
     // Function to finalize votes after the voting period has ended
@@ -138,7 +134,7 @@ contract NdMemeVoting {
         return topic.votes[optionHash];
     }
 
-    // Function to retrieve the topic details
+   // Function to retrieve the topic details
     function getTopicDetails(uint256 topicId)
         external
         view
@@ -146,13 +142,21 @@ contract NdMemeVoting {
         returns (
             string memory description,
             uint256 endTime,
-            string[] memory optionDescriptions
+            string[] memory optionDescriptions,
+            uint256[] memory optionVoteCounts
         )
     {
         Topic storage topic = topics[topicId];
         description = topic.description;
         endTime = topic.endTime;
         optionDescriptions = topic.optionStrings;
+
+        // Calculate vote counts for each option
+        optionVoteCounts = new uint256[](topic.optionHashes.length);
+        for (uint256 i = 0; i < topic.optionHashes.length; i++) {
+            bytes32 optionHash = topic.optionHashes[i];
+            optionVoteCounts[i] = topic.voters[optionHash].length;
+        }
     }
 
     // Function to retrieve the number of topics

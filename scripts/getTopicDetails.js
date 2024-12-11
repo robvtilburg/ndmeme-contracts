@@ -53,12 +53,6 @@ const contractABI = [
         "internalType": "string",
         "name": "option",
         "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "weight",
-        "type": "uint256"
       }
     ],
     "name": "Voted",
@@ -155,6 +149,11 @@ const contractABI = [
         "internalType": "string[]",
         "name": "optionDescriptions",
         "type": "string[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "optionVoteCounts",
+        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",
@@ -261,9 +260,33 @@ const contractABI = [
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "votedTopics",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   }
 ];
-const contractAddress = "0x1896e024F4df09bC6B260558aDB70b6487803219";
+const contractAddress = "0x675649b32511a3Cc0e664f27f98740a8fb5f6fE0";
 
 async function getTopics() {
   const provider = new ethers.providers.JsonRpcProvider(process.env.INFURA_API_URL);
@@ -274,7 +297,7 @@ async function getTopics() {
     console.log(`Total Topics: ${topicCount.toString()}`);
 
     for (let i = 0; i < topicCount; i++) {
-      const [description, endTime, options] = await contract.getTopicDetails(i);
+      const [description, endTime, options, optionVoteCounts] = await contract.getTopicDetails(i);
 
       console.log(`\nTopic ${i}:`);
       console.log(`  Description: ${description}`);
@@ -283,6 +306,8 @@ async function getTopics() {
       options.forEach((option, index) => {
         console.log(`    ${index + 1}: ${option}`);
       });
+
+      console.log(`optionVoteCounts: ${optionVoteCounts}`)
     }
   } catch (error) {
     console.error("Error fetching topics:", error);
